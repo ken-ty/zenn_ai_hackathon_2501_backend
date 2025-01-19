@@ -1,0 +1,17 @@
+services:
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8081:8080"
+    environment:
+      - SWAGGER_JSON=/swagger/swagger.json
+    volumes:
+      - ./swagger.json:/swagger/swagger.json
+
+  swagger-mock:
+    image: stoplight/prism:4
+    ports:
+      - "8080:4010"
+    command: mock -h 0.0.0.0 /swagger/swagger.json
+    volumes:
+      - ./swagger.json:/swagger/swagger.json

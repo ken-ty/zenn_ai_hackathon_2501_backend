@@ -1,0 +1,105 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AI Hackathon API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/questions": {
+      "get": {
+        "summary": "Get questions",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 25
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "latest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "answers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                },
+                                "is_correct": {
+                                  "type": "boolean"
+                                },
+                                "picture_title": {
+                                  "type": "string"
+                                },
+                                "picture_description": {
+                                  "type": "string"
+                                },
+                                "picture_author": {
+                                  "type": "string"
+                                },
+                                "picture_create_date": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "example": "2025-01-19"
+                                },
+                                "picture_original_path": {
+                                  "type": "string"
+                                },
+                                "picture_resize_path": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

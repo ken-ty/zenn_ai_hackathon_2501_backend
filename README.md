@@ -2,6 +2,29 @@
 
 AI Agent Hackathon with Google Cloud のバックエンド
 
+## FE開発者向け
+
+mock server の起動方法
+
+```bash
+# image 作成
+docker compose build --no-cache
+
+# 起動
+docker compose up
+
+# 停止
+docker compose down
+```
+
+例:
+
+```bash
+curl -X 'GET' 'http://localhost:8080/api/v1/questions?page=1&limit=25&order=latest' -H 'accept: application/json'
+```
+
+BE の更新を反映するには、 最新 main を pull して、 上記コマンドを 初めからやり直す
+
 ## API開発フロー
 
 このプロジェクトでは、OpenAPI (Swagger) 仕様を使用してAPI定義を管理し、型安全な開発を実現します。
