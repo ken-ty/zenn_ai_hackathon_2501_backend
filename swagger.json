@@ -51,10 +51,16 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 2
                           },
                           "title": {
-                            "type": "string"
+                            "type": "string",
+                            "example": "贋作に騙されるな! その2"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "いぬです"
                           },
                           "answers": {
                             "type": "array",
@@ -62,36 +68,206 @@
                               "type": "object",
                               "properties": {
                                 "id": {
-                                  "type": "integer"
+                                  "type": "integer",
+                                  "example": 1
                                 },
                                 "is_correct": {
-                                  "type": "boolean"
+                                  "type": "boolean",
+                                  "example": true
                                 },
                                 "picture_title": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "example": "いぬです"
                                 },
                                 "picture_description": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "example": "犬の絵画"
                                 },
                                 "picture_author": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "example": "乾犬"
                                 },
                                 "picture_create_date": {
                                   "type": "string",
                                   "format": "date",
-                                  "example": "2025-01-19"
+                                  "example": "1889-01-19"
                                 },
                                 "picture_original_path": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "example": "https://picsum.photos/id/1062/1080/1920"
                                 },
                                 "picture_resize_path": {
-                                  "type": "string"
+                                  "type": "string",
+                                  "example": "https://picsum.photos/id/1062/1080/1920"
                                 }
                               }
                             }
                           }
                         }
                       }
+                    }
+                  }
+                },
+                "example": {
+                  "questions": [
+                    {
+                      "id": 1,
+                      "title": "贋作に騙されるな! その1",
+                      "description": "ねこです",
+                      "answers": [
+                        {
+                          "id": 1,
+                          "is_correct": true,
+                          "picture_title": "ねこです",
+                          "picture_description": "猫の絵画",
+                          "picture_author": "猫田",
+                          "picture_create_date": "1888-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1025/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1025/1080/1920"
+                        },
+                        {
+                          "id": 2,
+                          "is_correct": false,
+                          "picture_title": "間違いねこです",
+                          "picture_description": "猫じゃなくてライオン",
+                          "picture_author": "AI次郎",
+                          "picture_create_date": "1920-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1026/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1026/1080/1920"
+                        }
+                      ]
+                    },
+                    {
+                      "id": 2,
+                      "title": "贋作に騙されるな! その2",
+                      "description": "いぬです",
+                      "answers": [
+                        {
+                          "id": 1,
+                          "is_correct": true,
+                          "picture_title": "いぬです",
+                          "picture_description": "犬の絵画",
+                          "picture_author": "乾犬",
+                          "picture_create_date": "1889-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1062/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1062/1080/1920"
+                        },
+                        {
+                          "id": 2,
+                          "is_correct": false,
+                          "picture_title": "間違いぬです",
+                          "picture_description": "犬じゃなくてセイウチ",
+                          "picture_author": "AI太郎",
+                          "picture_create_date": "1919-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1084/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1084/1080/1920"
+                        }
+                      ]
+                    },
+                    {
+                      "id": 3,
+                      "title": "贋作に騙されるな! その3",
+                      "description": "うまです",
+                      "answers": [
+                        {
+                          "id": 1,
+                          "is_correct": true,
+                          "picture_title": "うまです",
+                          "picture_description": "馬の絵画",
+                          "picture_author": "馬田",
+                          "picture_create_date": "1890-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1074/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1074/1080/1920"
+                        },
+                        {
+                          "id": 2,
+                          "is_correct": false,
+                          "picture_title": "間違いうまです",
+                          "picture_description": "馬じゃなくてロバ",
+                          "picture_author": "AI三郎",
+                          "picture_create_date": "1921-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1075/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1075/1080/1920"
+                        }
+                      ]
+                    },
+                    {
+                      "id": 4,
+                      "title": "贋作に騙されるな! その4",
+                      "description": "とりです",
+                      "answers": [
+                        {
+                          "id": 1,
+                          "is_correct": true,
+                          "picture_title": "とりです",
+                          "picture_description": "鳥の絵画",
+                          "picture_author": "鳥山",
+                          "picture_create_date": "1891-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1076/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1076/1080/1920"
+                        },
+                        {
+                          "id": 2,
+                          "is_correct": false,
+                          "picture_title": "間違いとりです",
+                          "picture_description": "鳥じゃなくてコウモリ",
+                          "picture_author": "AI四郎",
+                          "picture_create_date": "1922-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1077/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1077/1080/1920"
+                        }
+                      ]
+                    },
+                    {
+                      "id": 5,
+                      "title": "贋作に騙されるな! その5",
+                      "description": "さかなです",
+                      "answers": [
+                        {
+                          "id": 1,
+                          "is_correct": true,
+                          "picture_title": "さかなです",
+                          "picture_description": "魚の絵画",
+                          "picture_author": "魚田",
+                          "picture_create_date": "1892-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1078/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1078/1080/1920"
+                        },
+                        {
+                          "id": 2,
+                          "is_correct": false,
+                          "picture_title": "間違いさかなです",
+                          "picture_description": "魚じゃなくてイルカ",
+                          "picture_author": "AI五郎",
+                          "picture_create_date": "1923-01-19",
+                          "picture_resize_path": "https://picsum.photos/id/1079/1080/1920",
+                          "picture_original_path": "https://picsum.photos/id/1079/1080/1920"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "システムの死活監視用エンドポイント",
+        "responses": {
+          "200": {
+            "description": "System is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
                     }
                   }
                 }

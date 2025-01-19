@@ -20,7 +20,9 @@ docker compose down
 例:
 
 ```bash
+curl -X 'GET' 'http://localhost:8080/api/v1/health' -H 'accept: application/json'
 curl -X 'GET' 'http://localhost:8080/api/v1/questions?page=1&limit=25&order=latest' -H 'accept: application/json'
+curl -X 'GET' 'http://localhost:8080/api/v1/questions?page=1&limit=25&order=latest' -H 'accept: application/json' -H '__example: Example'
 ```
 
 BE の更新を反映するには、 最新 main を pull して、 上記コマンドを 初めからやり直す
