@@ -19,6 +19,11 @@ export IMAGE_URL=${LOCATION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${SERVICE
 pack build zenn_ai-linux --builder paketobuildpacks/builder-jammy-base --path . --platform linux/amd64
 ```
 
+```bash
+# ホットリロード環境のサーバー　（local専用
+air
+```
+
 ### 実行と確認
 
 ```bash
