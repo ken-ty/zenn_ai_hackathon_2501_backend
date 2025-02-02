@@ -3,10 +3,7 @@
 ## ビルド
 
 ```bash
-# ビルド (Linux 向け)
-pack build zenn_ai-linux --path . --builder=gcr.io/buildpacks/builder --platform linux/amd64
-# ビルド (Apple Silicon 向け)
-pack build zenn_ai-arm --builder paketobuildpacks/builder:base --path . --platform linux/arm64
+pack build zenn_ai-linux --builder paketobuildpacks/builder-jammy-base --path . --platform linux/amd64
 ```
 
 ## Docker 操作
@@ -15,7 +12,9 @@ pack build zenn_ai-arm --builder paketobuildpacks/builder:base --path . --platfo
 # Dockerイメージの一覧を表示
 docker images | grep zenn_ai-linux
 # イメージを実行
-docker run zenn_ai-linux
+docker run -p 8080:8080 zenn_ai-linux
+# 確認
+curl http://localhost:8080
 # イメージを削除
 docker rmi zenn_ai-linux
 # イメージの詳細情報を表示
