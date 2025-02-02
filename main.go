@@ -5,12 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/ken-ty/zenn_ai_hackathon_2501_backend/service"
 )
 
 func main() {
 	log.Print("starting server...")
-	// テスト
-	http.HandleFunc("/healthz", handler)
+	// ヘルスチェック
+	http.HandleFunc("/health", service.HealthCheckHandler)
 
 	// Determine port for HTTP service.
 	port := os.Getenv("PORT")
@@ -24,8 +26,4 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 }
