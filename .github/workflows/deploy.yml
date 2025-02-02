@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    types:
+      - completed
+    branches: [ main ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  SERVICE: ai-art-quiz
+  REGISTRY: us-central1-docker.pkg.dev
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    # テストワークフローが成功した場合のみ実行
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      packages: 'write'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Google Auth
+      uses: google-github-actions/auth@v1
+      with:
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+        create_credentials_file: true
+        export_environment_variables: true
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Authorize Docker push
+      run: gcloud auth configure-docker ${{ env.REGISTRY }}
+
+    - name: Build and Push Container
+      run: |-
+        docker build -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/gcr-io/${{ env.SERVICE }}:${{ github.sha }} .
+        docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/gcr-io/${{ env.SERVICE }}:${{ github.sha }}
+
+    - name: Deploy to Cloud Run
+      id: deploy
+      run: |-
+        gcloud run deploy ${{ env.SERVICE }} \
+          --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/gcr-io/${{ env.SERVICE }}:${{ github.sha }} \
+          --region ${{ env.REGION }} \
+          --platform managed \
+          --allow-unauthenticated \
+          --service-account github-actions@zenn-ai-hackathon-2501.iam.gserviceaccount.com \
+          --set-env-vars="PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},BUCKET_NAME=${{ secrets.BUCKET_NAME }}" \
+          --set-env-vars="LOG_LEVEL=DEBUG" \
+          --timeout=300 \
+          --cpu=1 \
+          --memory=512Mi \
+          --min-instances=0 \
+          --max-instances=10 \
+          --cpu-boost
+        echo "url=$(gcloud run services describe ${{ env.SERVICE }} --region ${{ env.REGION }} --format 'value(status.url)')" >> $GITHUB_OUTPUT
