@@ -29,8 +29,8 @@ air
 ```bash
 # ローカルで実行
 docker run -p 8080:8080 zenn_ai-linux
-# 動作確認
-curl http://localhost:8080
+# 動作確認 status code は option -s で確認
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/healthz
 ```
 
 ## Cloud へのデプロイ
