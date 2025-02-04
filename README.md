@@ -19,18 +19,19 @@ export IMAGE_URL=${LOCATION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${SERVICE
 pack build zenn_ai-linux --builder paketobuildpacks/builder-jammy-base --path . --platform linux/amd64
 ```
 
-```bash
-# ホットリロード環境のサーバー　（local専用
-air
-```
-
 ### 実行と確認
 
 ```bash
 # ローカルで実行
 docker run -p 8080:8080 zenn_ai-linux
+# or ホットリロード環境のサーバー　（local専用
+air
 # 動作確認 status code は option -s で確認
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health
+curl -v -X GET http://localhost:8080/health
+# 画像投稿
+curl -X POST \
+  -F "image=@/fixture/test.png" \ 
+  http://localhost:8080/upload
 ```
 
 ## Cloud へのデプロイ
@@ -76,3 +77,7 @@ docker rmi zenn_ai-arm zenn_ai-linux
 # コンテナの強制停止と削除
 docker rm -f $(docker ps -aq)
 ```
+
+### Tips
+
+- `screencapture -t jpg test.jpg\n` でスクリーンショットを撮影

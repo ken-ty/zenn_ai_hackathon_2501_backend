@@ -30,6 +30,7 @@ main
 # 環境変数ファイル
 .env
 .env.local
+.env.*.local
 
 # ログファイル
 *.log
