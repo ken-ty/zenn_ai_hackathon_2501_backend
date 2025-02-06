@@ -99,7 +99,7 @@ OK
 ## Step 6: Cloud Storageとの連携
 
 - `/internal/storage/client.go` を実装。
-- `/cmd/server/main.go` を更新。
+- `/cmd/server/main.go:main()` にCloud Storageの初期化処理を追加。
 
 ```bash
 # ローカルサーバーの起動
@@ -116,7 +116,7 @@ OK
 ## Step 7: データモデルの実装
 
 - `/internal/models/types.go` を実装。
-- `/cmd/server/main.go` を更新。
+- `/cmd/server/main.go:uploadHandler()` にCloud Storageにアップロードする処理を追加。
 
 ```bash
 # ローカルサーバーの起動
@@ -133,7 +133,7 @@ curl -X POST -F "file=@test.jpg" http://localhost:8080/upload
 
 ## Step 8: クイズ情報を取得する機能の実装
 
-- `/cmd/server/main.go` を更新。
+- `/cmd/server/main.go:questionsHandler()` にクイズ情報取得処理を実装。
 
 ```bash
 # ローカルサーバーの起動
