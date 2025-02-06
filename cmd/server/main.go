@@ -1,12 +1,26 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+
+	"zenn_ai_hackathon_2501_backend/internal/storage"
 )
 
+var storageClient *storage.Client
+
 func main() {
+	ctx := context.Background()
+
+	// Cloud Storageクライアントの初期化
+	client, err := storage.NewClient(ctx, "zenn-ai-hackathon-2501")
+	if err != nil {
+		log.Fatal(err)
+	}
+	storageClient = client
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

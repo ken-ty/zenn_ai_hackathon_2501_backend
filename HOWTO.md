@@ -99,3 +99,16 @@ OK
 ## Step 6: Cloud Storageとの連携
 
 - `/internal/storage/client.go` を実装。
+- `/cmd/server/main.go` を更新。
+
+```bash
+# ローカルサーバーの起動
+go run cmd/server/main.go
+
+# 期待する出力
+2025/02/06 13:07:23 Server starting on port 8080
+
+# 別ターミナルで確認
+curl http://localhost:8080/health
+OK
+```
