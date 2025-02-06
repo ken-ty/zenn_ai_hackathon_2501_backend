@@ -83,6 +83,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func questionsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: クイズ情報取得処理の実装
-	w.WriteHeader(http.StatusNotImplemented)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// メタデータファイルの読み込み
+	reader, err := storageClient.GetFile(r.Context(), "metadata/questions.json")
+	if err != nil {
+		http.Error(w, "Failed to read questions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var response models.QuestionsResponse
+	if err := json.NewDecoder(reader).Decode(&response); err != nil {
+		http.Error(w, "Failed to decode questions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

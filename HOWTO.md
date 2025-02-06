@@ -130,3 +130,20 @@ screencapture -t jpg test.jpg
 curl -X POST -F "file=@test.jpg" http://localhost:8080/upload
 {"image_id":"image_1738815217","storage_url":"gs://zenn-ai-hackathon-2501/original/image_1738815217.jpg","status":"success"}
 ```
+
+## Step 8: クイズ情報を取得する機能の実装
+
+- `/cmd/server/main.go` を更新。
+
+```bash
+# ローカルサーバーの起動
+go run cmd/server/main.go
+
+# 期待する出力
+2025/02/06 13:07:23 Server starting on port 8080
+
+# 別ターミナルで確認
+curl http://localhost:8080/questions
+{"questions":[]}
+```
+
