@@ -97,3 +97,7 @@ gcloud run deploy zenn-ai --source .
 - [Zenn AI Agent Hackathon 公式ページ](https://zenn.dev/hackathons/2024-google-cloud-japan-ai-hackathon)
 - [Google Cloud 公式ドキュメント](https://cloud.google.com/docs)
 - [Go言語ドキュメント](https://golang.org/doc/)
+- [Vertex AIのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/vertexai)
+- [Cloud Runのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/run)
+- [Cloud Storageのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/storage)
+- [](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal?hl=ja)

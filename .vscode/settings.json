@@ -1,6 +1,24 @@
 {
   "cSpell.words": [
+    "adminsdk",
     "aiplatform",
-    "screencapture"
+    "aiplatformpb",
+    "apiv1",
+    "apiv2",
+    "artifactregistry",
+    "cloudbuild",
+    "containeranalysis",
+    "containerregistry",
+    "fbsvc",
+    "firebaseml",
+    "firebasevertexai",
+    "imagegeneration",
+    "kenty",
+    "modelgarden",
+    "northamerica",
+    "screencapture",
+    "serviceusage",
+    "southamerica",
+    "structpb"
   ]
 }
