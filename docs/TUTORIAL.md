@@ -94,10 +94,26 @@ gcloud run deploy zenn-ai --source .
 
 ## 📚 参考リンク
 
+### ハッカソン関連
+
 - [Zenn AI Agent Hackathon 公式ページ](https://zenn.dev/hackathons/2024-google-cloud-japan-ai-hackathon)
-- [Google Cloud 公式ドキュメント](https://cloud.google.com/docs)
-- [Go言語ドキュメント](https://golang.org/doc/)
+
+### Vertex AI 関連
+
+- [Vertex AI ドキュメント](https://cloud.google.com/vertex-ai/docs)
+  - [サンプルコード](https://cloud.google.com/vertex-ai/docs/samples?language=golang)
+  - [Vertex AI Model Garden（公式）](https://console.cloud.google.com/vertex-ai/model-garden)
+- [Vertex AI API for Gemini](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal?hl=ja)
 - [Vertex AIのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/vertexai)
+
+### その他のGCPサービス
+
+- [Google Cloud 公式ドキュメント](https://cloud.google.com/docs)
 - [Cloud Runのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/run)
 - [Cloud Storageのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/storage)
-- [](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal?hl=ja)
+- [Firebase ドキュメント](https://firebase.google.com/docs)
+- [Cloud Billing API](https://cloud.google.com/billing/docs/how-to/notify?hl=ja#cap_disable_billing_to_stop_usage)
+
+### 開発言語
+
+- [Go言語ドキュメント](https://golang.org/doc/)

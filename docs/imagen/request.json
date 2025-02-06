@@ -1,0 +1,11 @@
+{
+  "instances": [
+    {
+      "prompt": "A beautiful sunset over mountains"
+    }
+  ],
+  "parameters": {
+    "sampleCount": 1,
+    "aspectRatio": "1:1"
+  }
+}

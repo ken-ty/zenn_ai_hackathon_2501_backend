@@ -79,9 +79,3 @@ Zennが主催する初のオンラインハッカソン。生成AIとGoogle Clou
 3. デモ動画（3分以内）
 4. アーキテクチャ図
 5. セキュリティ対策の説明
-
-## 📚 参考リンク
-
-- [Google Cloud ドキュメント](https://cloud.google.com/docs)
-- [Vertex AI ドキュメント](https://cloud.google.com/vertex-ai/docs)
-- [Firebase ドキュメント](https://firebase.google.com/docs)
