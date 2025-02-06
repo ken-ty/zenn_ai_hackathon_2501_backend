@@ -10,11 +10,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"zenn_ai_hackathon_2501_backend/internal/ai"
 	"zenn_ai_hackathon_2501_backend/internal/models"
 	"zenn_ai_hackathon_2501_backend/internal/storage"
 )
 
-var storageClient *storage.Client
+var (
+	storageClient *storage.Client
+	aiClient      *ai.Client
+)
 
 func main() {
 	ctx := context.Background()
@@ -25,6 +29,9 @@ func main() {
 		log.Fatal(err)
 	}
 	storageClient = client
+
+	// AI クライアントの初期化
+	aiClient = ai.NewClient("zenn-ai-hackathon-2501", "us-east1")
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -168,3 +168,11 @@ curl -X POST -F "file=@test.jpg" http://localhost:8080/upload
 curl http://localhost:8080/questions
 {"questions":[{"id":"image_1738826600","original_image":"original/image_1738826600.jpg","fake_images":[],"correct_index":0,"created_at":"2025-02-06T07:23:23Z"}]}
 ```
+
+## Step 10: Vertex AIを使用して偽画像を生成する機能の実装
+
+- `/internal/ai/client.go` を実装。
+- `/cmd/server/main.go:aiClient` を初期化。
+
+これはまだ実行できません。
+
