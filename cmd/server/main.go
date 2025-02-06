@@ -71,6 +71,35 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// クイズデータの取得
+	reader, err := storageClient.GetFile(r.Context(), "metadata/questions.json")
+	if err != nil {
+		http.Error(w, "Failed to read questions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var questions models.QuestionsResponse
+	if err := json.NewDecoder(reader).Decode(&questions); err != nil {
+		http.Error(w, "Failed to decode questions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 新しいクイズの追加
+	newQuestion := models.Question{
+		ID:            imageID,
+		OriginalImage: filename,
+		FakeImages:    []string{}, // 後でAI生成画像のパスを追加
+		CorrectIndex:  0,
+		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
+	}
+	questions.Questions = append(questions.Questions, newQuestion)
+
+	// メタデータの更新
+	if err := storageClient.UpdateQuestions(r.Context(), questions); err != nil {
+		http.Error(w, "Failed to update questions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// レスポンスの作成
 	response := models.UploadResponse{
 		ImageID:    imageID,

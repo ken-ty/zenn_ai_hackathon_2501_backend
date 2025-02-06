@@ -147,3 +147,24 @@ curl http://localhost:8080/questions
 {"questions":[]}
 ```
 
+## Step 9: アップロードされた画像をクイズデータとして登録する機能の実装
+
+- `/internal/storage/client.go:UpdateQuestions()` を追加。
+- `/cmd/server/main.go:uploadHandler()` にクイズデータを登録する処理を追加。
+
+```bash
+# ローカルサーバーの起動
+go run cmd/server/main.go
+
+# 期待する出力
+2025/02/06 16:23:05 Server starting on port 8080
+
+# 別ターミナルで確認 1
+curl -X POST -F "file=@test.jpg" http://localhost:8080/upload
+
+{"image_id":"image_1738826600","storage_url":"gs://zenn-ai-hackathon-2501/original/image_1738826600.jpg","status":"success"}
+
+# 別ターミナルで確認 2
+curl http://localhost:8080/questions
+{"questions":[{"id":"image_1738826600","original_image":"original/image_1738826600.jpg","fake_images":[],"correct_index":0,"created_at":"2025-02-06T07:23:23Z"}]}
+```
