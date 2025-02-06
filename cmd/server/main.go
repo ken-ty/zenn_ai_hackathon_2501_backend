@@ -78,6 +78,29 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// AI生成画像の作成（3枚）
+	var fakeImages []string
+	for i := 0; i < 3; i++ {
+		// ファイルポインタを先頭に戻す
+		file.Seek(0, 0)
+
+		// AI生成画像の生成
+		generatedImage, err := aiClient.GenerateImage(r.Context(), file)
+		if err != nil {
+			http.Error(w, "Failed to generate image: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// 生成画像の保存
+		fakePath := fmt.Sprintf("generated/%s_fake%d%s", imageID, i, filepath.Ext(header.Filename))
+		if err := storageClient.UploadFile(r.Context(), fakePath, generatedImage); err != nil {
+			http.Error(w, "Failed to upload generated image: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fakeImages = append(fakeImages, fakePath)
+	}
+
 	// クイズデータの取得
 	reader, err := storageClient.GetFile(r.Context(), "metadata/questions.json")
 	if err != nil {
@@ -95,7 +118,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	newQuestion := models.Question{
 		ID:            imageID,
 		OriginalImage: filename,
-		FakeImages:    []string{}, // 後でAI生成画像のパスを追加
+		FakeImages:    fakeImages,
 		CorrectIndex:  0,
 		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
 	}
