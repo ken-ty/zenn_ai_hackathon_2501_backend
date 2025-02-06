@@ -112,3 +112,21 @@ go run cmd/server/main.go
 curl http://localhost:8080/health
 OK
 ```
+
+## Step 7: データモデルの実装
+
+- `/internal/models/types.go` を実装。
+- `/cmd/server/main.go` を更新。
+
+```bash
+# ローカルサーバーの起動
+go run cmd/server/main.go
+
+# 期待する出力
+2025/02/06 13:07:23 Server starting on port 8080
+
+# 別ターミナルで確認
+screencapture -t jpg test.jpg 
+curl -X POST -F "file=@test.jpg" http://localhost:8080/upload
+{"image_id":"image_1738815217","storage_url":"gs://zenn-ai-hackathon-2501/original/image_1738815217.jpg","status":"success"}
+```
