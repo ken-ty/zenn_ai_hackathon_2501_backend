@@ -41,12 +41,15 @@ func (c *Client) GenerateImage(ctx context.Context, originalImage io.Reader) (io
 		return nil, fmt.Errorf("io.ReadAll: %v", err)
 	}
 
+	// バイナリデータをbase64エンコード
+	base64Input := base64.StdEncoding.EncodeToString(imageBytes)
+
 	// インスタンスの構造を正しく構築
 	imageValue, err := structpb.NewValue(&structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"image": {
 				Kind: &structpb.Value_StringValue{
-					StringValue: string(imageBytes),
+					StringValue: base64Input,
 				},
 			},
 			"mode": {
