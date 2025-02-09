@@ -23,3 +23,4 @@ curl -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "Co
 ## 参考資料
 
 - [A Developer's Guide to Imagen 3 on Vertex AI](https://cloud.google.com/blog/products/ai-machine-learning/a-developers-guide-to-imagen-3-on-vertex-ai?e=0?utm_source%3Dlinkedin&hl=en)
+- [もしかするとアクセス権がないのかもしれない](https://cloud.google.com/vertex-ai/generative-ai/docs/image/generate-images?hl=ja)

@@ -31,7 +31,7 @@ func main() {
 	storageClient = client
 
 	// AI クライアントの初期化
-	aiClient = ai.NewClient("zenn-ai-hackathon-2501", "us-east1")
+	aiClient = ai.NewClient("zenn-ai-hackathon-2501", "us-central1")
 
 	port := os.Getenv("PORT")
 	if port == "" {

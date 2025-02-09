@@ -5,7 +5,7 @@
 ```bash
 # GCPプロジェクトの設定
 gcloud config set project zenn-ai-hackathon-2501
-gcloud config set run/region us-east1
+gcloud config set run/region us-central1
 ### 3. 必要なGoogle Cloudサービスの有効化
 # 必要なAPIの有効化
 gcloud services enable \
@@ -20,7 +20,7 @@ gcloud services enable \
 
 ```bash
 gcloud storage buckets create gs://zenn-ai-hackathon-2501 \
-  --location=us-east1 \
+  --location=us-central1 \
   --uniform-bucket-level-access
 
 # サブディレクトリの作成（メタデータ用）
@@ -65,7 +65,6 @@ gcloud projects add-iam-policy-binding zenn-ai-hackathon-2501 \
 gcloud iam service-accounts keys create config/credentials/keyfile.json \
   --iam-account=zenn-ai-backend@zenn-ai-hackathon-2501.iam.gserviceaccount.com
 ```
-
 
 ## Step 4: ローカル開発環境のセットアップ
 
@@ -176,3 +175,45 @@ curl http://localhost:8080/questions
 
 これはまだ実行できません。
 
+```bash
+# プロジェクトとリージョンの設定
+gcloud config set project zenn-ai-hackathon-2501
+gcloud config set ai/region us-central1
+
+# 必要なAPIの有効化
+gcloud services enable aiplatform.googleapis.com
+
+# サービスアカウントへの権限追加
+gcloud projects add-iam-policy-binding zenn-ai-hackathon-2501 \
+    --member="serviceAccount:zenn-ai-backend@zenn-ai-hackathon-2501.iam.gserviceaccount.com" \
+    --role="roles/aiplatform.modelUser"
+
+# エンドポイントの作成
+gcloud ai endpoints create \
+  --region=us-central1 \
+  --display-name="image-generation-endpoint"
+
+# エンドポイントの確認
+gcloud ai endpoints list --region=us-central1
+
+Using endpoint [https://us-central1-aiplatform.googleapis.com/]
+ENDPOINT_ID          DISPLAY_NAME
+6898120448387579904  image-generation-endpoint
+```
+
+```bash
+# 確認コマンド(まだやってない)
+# ローカルサーバーの起動
+go run cmd/server/main.go
+
+# 期待する出力
+2025/02/06 16:23:05 Server starting on port 8080
+
+# 別ターミナルで確認 1
+apple@kenty-work-mac zenn_ai_hackathon_2501_backend % curl -X POST -F "file=@test.jpg" http://localhost:8080/upload > upload_test.log
+{...}
+
+# 別ターミナルで確認 2
+curl http://localhost:8080/questions
+{...}
+```
