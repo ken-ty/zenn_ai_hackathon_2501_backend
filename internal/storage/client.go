@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"time"
 
 	"zenn_ai_hackathon_2501_backend/internal/models"
 
 	"cloud.google.com/go/storage"
+	"golang.org/x/oauth2/google"
 )
 
 type Client struct {
@@ -64,4 +67,41 @@ func (c *Client) UpdateQuestions(ctx context.Context, questions models.Questions
 	}
 
 	return nil
+}
+
+// GenerateSignedURL は、指定されたオブジェクトの署名付きURLを生成します。
+// このURLは、オブジェクトの読み取り専用アクセスを許可し、有効期限が15分間です。
+func (c *Client) GenerateSignedURL(ctx context.Context, objectPath string) (string, error) {
+	log.Printf("Generating signed URL for: %s", objectPath)
+
+	credentials, err := google.FindDefaultCredentials(ctx, storage.ScopeReadOnly)
+	if err != nil {
+		log.Printf("Error getting credentials: %v", err)
+		return "", fmt.Errorf("failed to get credentials: %v", err)
+	}
+	log.Printf("Got credentials successfully")
+
+	conf, err := google.JWTConfigFromJSON(credentials.JSON)
+	if err != nil {
+		log.Printf("Error getting JWT config: %v", err)
+		return "", fmt.Errorf("failed to get JWT config: %v", err)
+	}
+	log.Printf("Using service account email: %s", conf.Email)
+
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		Method:         "GET",
+		Expires:        time.Now().Add(15 * time.Minute),
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+	}
+
+	url, err := c.bucket.SignedURL(objectPath, opts)
+	if err != nil {
+		log.Printf("Error generating signed URL: %v", err)
+		return "", err
+	}
+	log.Printf("Successfully generated signed URL")
+
+	return url, nil
 }

@@ -141,13 +141,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// クイズデータの取得
+// 署名付きURLを生成して返す
 func questionsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// メタデータファイルの読み込み
 	reader, err := storageClient.GetFile(r.Context(), "metadata/questions.json")
 	if err != nil {
 		http.Error(w, "Failed to read questions: "+err.Error(), http.StatusInternalServerError)
@@ -158,6 +159,23 @@ func questionsHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(reader).Decode(&response); err != nil {
 		http.Error(w, "Failed to decode questions: "+err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// 各画像に対して署名付きURLを生成
+	for i := range response.Questions {
+		// オリジナル画像のURL生成
+		signedURL, err := storageClient.GenerateSignedURL(r.Context(), response.Questions[i].OriginalImage)
+		if err == nil {
+			response.Questions[i].OriginalImage = signedURL
+		}
+
+		// フェイク画像のURL生成
+		for j, fakePath := range response.Questions[i].FakeImages {
+			signedURL, err := storageClient.GenerateSignedURL(r.Context(), fakePath)
+			if err == nil {
+				response.Questions[i].FakeImages[j] = signedURL
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
