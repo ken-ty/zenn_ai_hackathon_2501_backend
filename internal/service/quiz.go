@@ -29,22 +29,21 @@ func NewQuizService(storageClient *storage.Client, aiClient *ai.Client) *QuizSer
 }
 
 func (s *QuizService) CreateQuiz(ctx context.Context, file io.Reader, filename string) (*models.UploadResponse, error) {
-	// 画像の検証とバッファへのコピー
 	buf, err := s.imageValidator.ValidateAndCopy(file, filename)
 	if err != nil {
 		return nil, err
 	}
 
-	// 以降は既存の処理
 	imageID := fmt.Sprintf("image_%d", time.Now().Unix())
-	storagePath := fmt.Sprintf("original/%s%s", imageID, filepath.Ext(filename))
+	storagePath := s.generateStoragePath(imageID, nil, filepath.Ext(filename))
 
-	if err := s.storageClient.UploadFile(ctx, storagePath, bytes.NewReader(buf.Bytes())); err != nil {
-		return nil, fmt.Errorf("failed to upload file: %w", err)
+	// オリジナル画像を保存
+	if err := s.saveImageToStorage(ctx, buf.Bytes(), storagePath); err != nil {
+		return nil, fmt.Errorf("failed to upload original file: %w", err)
 	}
 
-	// AI生成画像の作成
-	fakeImages, err := s.generateFakeImages(ctx, bytes.NewReader(buf.Bytes()), imageID, filename)
+	// Fake画像を生成して保存
+	fakeImages, err := s.generateAndStoreFakeImages(ctx, bytes.NewReader(buf.Bytes()), imageID, filename)
 	if err != nil {
 		return nil, err
 	}
@@ -81,32 +80,26 @@ func (s *QuizService) GetQuizzes(ctx context.Context) (*models.QuestionsResponse
 	return &response, nil
 }
 
-// 内部ヘルパー関数
-func (s *QuizService) generateFakeImages(ctx context.Context, file io.Reader, imageID, filename string) ([]string, error) {
-	// 最初にバッファに読み込む
-	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, file); err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
-	}
-
+func (s *QuizService) generateAndStoreFakeImages(ctx context.Context, file io.Reader, imageID, filename string) ([]string, error) {
 	var fakeImages []string
 	for i := 0; i < 3; i++ {
-		// プロンプトを生成
 		prompt := fmt.Sprintf("画像に基づいて、似ているが少し異なる画像を生成してください。変更点：%d", i+1)
 
-		// AI画像生成
-		generatedImage, err := s.aiClient.GenerateImage(ctx, prompt)
+		generatedImageBytes, err := s.aiClient.GenerateImage(ctx, prompt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate image: %w", err)
 		}
 
-		fakePath := fmt.Sprintf("generated/%s_fake%d%s", imageID, i, filepath.Ext(filename))
-		if err := s.storageClient.UploadFile(ctx, fakePath, bytes.NewReader(generatedImage)); err != nil {
+		fakePath := s.generateStoragePath(imageID, &i, filepath.Ext(filename))
+
+		// 生成画像を保存
+		if err := s.saveImageToStorage(ctx, generatedImageBytes, fakePath); err != nil {
 			return nil, fmt.Errorf("failed to upload generated image: %w", err)
 		}
 
 		fakeImages = append(fakeImages, fakePath)
 	}
+
 	return fakeImages, nil
 }
 
@@ -148,4 +141,19 @@ func (s *QuizService) generateSignedURLs(ctx context.Context, response *models.Q
 		}
 	}
 	return nil
+}
+
+// saveImageToStorage は画像をCloud Storageに保存するヘルパー関数です
+func (s *QuizService) saveImageToStorage(ctx context.Context, imageData []byte, path string) error {
+	return s.storageClient.UploadFile(ctx, path, bytes.NewReader(imageData))
+}
+
+// generateStoragePath はストレージパスを生成するヘルパー関数です
+// index == nil の場合はオリジナル画像のパスを生成
+// index != nil の場合は生成画像のパスを生成
+func (s *QuizService) generateStoragePath(imageID string, index *int, ext string) string {
+	if index == nil {
+		return fmt.Sprintf("original/%s%s", imageID, ext)
+	}
+	return fmt.Sprintf("generated/%s_fake%d%s", imageID, *index, ext)
 }
