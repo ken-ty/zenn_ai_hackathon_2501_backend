@@ -42,6 +42,19 @@ func NewClient(projectID, location string) (*Client, error) {
 
 // GenerateInterpretation は画像と作者の解釈から新しい解釈を生成します
 func (c *Client) GenerateInterpretation(ctx context.Context, imageData []byte, authorInterpretation string) (string, error) {
+	// 入力値のバリデーション
+	if len(imageData) == 0 {
+		return "", fmt.Errorf("画像データが必要です")
+	}
+	if authorInterpretation == "" {
+		return "", fmt.Errorf("作者の解釈が必要です")
+	}
+
+	// モデルがnilの場合のチェックを追加
+	if c.model == nil {
+		return "", fmt.Errorf("AIモデルが初期化されていません")
+	}
+
 	prompt := fmt.Sprintf(`
 この画像に対して、作者は以下のような解釈をしています：
 %s
@@ -62,7 +75,7 @@ func (c *Client) GenerateInterpretation(ctx context.Context, imageData []byte, a
 		return "", fmt.Errorf("解釈の生成に失敗: %w", err)
 	}
 
-	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+	if resp == nil || len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
 		return "", fmt.Errorf("有効な応答が得られませんでした")
 	}
 

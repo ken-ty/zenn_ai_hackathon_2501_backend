@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/zenn-dev/zenn-ai-hackathon/internal/ai"
@@ -99,8 +100,9 @@ func generateID() string {
 
 // shuffle はスライスの要素をランダムに並び替えます
 func shuffle(slice []string) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := len(slice) - 1; i > 0; i-- {
-		j := time.Now().UnixNano() % int64(i+1)
+		j := r.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
 }
