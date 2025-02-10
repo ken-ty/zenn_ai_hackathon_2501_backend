@@ -8,6 +8,7 @@ import (
 
 	"zenn_ai_hackathon_2501_backend/internal/ai"
 	"zenn_ai_hackathon_2501_backend/internal/handler"
+	"zenn_ai_hackathon_2501_backend/internal/service"
 	"zenn_ai_hackathon_2501_backend/internal/storage"
 )
 
@@ -23,8 +24,11 @@ func main() {
 	// AI クライアントの初期化
 	aiClient := ai.NewClient("zenn-ai-hackathon-2501", "us-central1")
 
+	// サービスの初期化
+	quizService := service.NewQuizService(storageClient, aiClient)
+
 	// ハンドラーの初期化
-	h := handler.NewHandler(storageClient, aiClient)
+	h := handler.NewHandler(quizService)
 
 	port := os.Getenv("PORT")
 	if port == "" {

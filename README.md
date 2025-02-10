@@ -1,4 +1,48 @@
-# README
+# AI Image Quiz Game Backend
+
+AI生成画像を活用したクイズゲームのバックエンドAPIサーバー
+
+## アーキテクチャ
+
+```mermaid
+graph LR
+    A[Request] --> B[Routing]
+    B --> C[Handler]
+    C --> D[Service]
+    D --> E[Client]
+    E --> F[External Services]
+```
+
+### レイヤー構成
+
+1. **Routing** (`cmd/server/main.go`)
+   - URLパスとハンドラーの紐付け
+   - リクエストの振り分け
+   - 例: `/upload` → `Upload` ハンドラー
+
+2. **Handler** (`internal/handler/`)
+   - HTTPリクエスト/レスポンスの処理
+   - バリデーション
+   - サービスの呼び出し
+   - 例: ファイルのアップロード処理、レスポンスのJSON化
+
+3. **Service** (`internal/service/`)
+   - ビジネスロジックの実装
+   - 複数のクライアントの連携
+   - データの加工
+   - 例: クイズの作成、画像の生成
+
+4. **Client** (`internal/storage/`, `internal/ai/`)
+   - 外部サービスとの通信処理
+   - API呼び出しの抽象化
+   - 例: Cloud Storage操作、Vertex AI API呼び出し
+
+5. **External Services**
+   - Google Cloud Storage
+   - Vertex AI
+   - その他のGCPサービス
+
+## 使用方法
 
 ```bash
 go run cmd/server/main.go
