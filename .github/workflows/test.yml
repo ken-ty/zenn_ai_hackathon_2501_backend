@@ -10,6 +10,7 @@ permissions:
   contents: read
   pull-requests: write
 
+# Run tests and upload coverage to Codecov
 jobs:
   test:
     name: Run Tests
@@ -38,9 +39,11 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
+    # Run tests with coverage
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
+    # Upload coverage to Codecov
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
