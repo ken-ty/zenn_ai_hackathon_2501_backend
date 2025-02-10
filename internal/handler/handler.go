@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"zenn_ai_hackathon_2501_backend/internal/service"
@@ -18,8 +19,13 @@ func NewHandler(quizService *service.QuizService) *Handler {
 }
 
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	fmt.Fprintln(w, "zenn-ai-hackathon-2501 is healthy")
 }
 
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {

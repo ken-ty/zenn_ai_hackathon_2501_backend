@@ -84,14 +84,17 @@ func (s *QuizService) generateFakeImages(ctx context.Context, file io.Reader, im
 
 	var fakeImages []string
 	for i := 0; i < 3; i++ {
-		// バッファをコピーして使用
-		generatedImage, err := s.aiClient.GenerateImage(ctx, bytes.NewReader(buf.Bytes()))
+		// プロンプトを生成
+		prompt := fmt.Sprintf("画像に基づいて、似ているが少し異なる画像を生成してください。変更点：%d", i+1)
+
+		// AI画像生成
+		generatedImage, err := s.aiClient.GenerateImage(ctx, prompt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate image: %w", err)
 		}
 
 		fakePath := fmt.Sprintf("generated/%s_fake%d%s", imageID, i, filepath.Ext(filename))
-		if err := s.storageClient.UploadFile(ctx, fakePath, generatedImage); err != nil {
+		if err := s.storageClient.UploadFile(ctx, fakePath, bytes.NewReader(generatedImage)); err != nil {
 			return nil, fmt.Errorf("failed to upload generated image: %w", err)
 		}
 

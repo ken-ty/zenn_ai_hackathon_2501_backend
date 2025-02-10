@@ -1,14 +1,13 @@
 package ai
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
-	"strings"
+
+	"golang.org/x/oauth2/google"
 )
 
 type Client struct {
@@ -25,54 +24,63 @@ func NewClient(project, location string) *Client {
 	}
 }
 
-func (c *Client) GenerateImage(ctx context.Context, originalImage io.Reader) (io.Reader, error) {
-	// 画像をバイト配列に変換
-	imageBytes, err := io.ReadAll(originalImage)
+func (c *Client) GenerateImage(ctx context.Context, prompt string) ([]byte, error) {
+	credentials, err := google.FindDefaultCredentials(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("io.ReadAll: %v", err)
+		return nil, fmt.Errorf("failed to get credentials: %v", err)
 	}
 
-	// base64エンコード
-	base64Input := base64.StdEncoding.EncodeToString(imageBytes)
-
-	// リクエストJSONの構築（インデントを整理）
-	requestJSON := fmt.Sprintf(`{
-		"instances": [{
-			"image": "%s",
-			"mode": "variation"
-		}]
-	}`, base64Input)
-
-	// アクセストークンの取得
-	cmd := exec.Command("gcloud", "auth", "print-access-token")
-	token, err := cmd.Output()
+	token, err := credentials.TokenSource.Token()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get access token: %v", err)
+		return nil, fmt.Errorf("failed to get token: %v", err)
 	}
 
-	// curlコマンドの実行とjqによる処理
-	endpoint := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/imagegeneration@006:predict",
-		c.location, c.project, c.location)
+	// プロンプトをJSONに変換
+	jsonStr := fmt.Sprintf(`{
+		"instances": [
+			{
+				"prompt": "%s"
+			}
+		],
+		"parameters": {
+			"sampleCount": 1
+		}
+	}`, prompt)
 
-	curlCmd := fmt.Sprintf(`curl -s -X POST \
-		-H "Authorization: Bearer %s" \
-		-H "Content-Type: application/json; charset=utf-8" \
-		-d @- \
-		"%s" | tee /dev/stderr | jq -r '.predictions[0].bytesBase64Encoded' | base64 -d`,
-		strings.TrimSpace(string(token)),
+	// curlコマンドを構築
+	endpoint := "https://asia-northeast1-aiplatform.googleapis.com/v1/projects/zenn-ai-hackathon-2501/locations/asia-northeast1/publishers/google/models/imagegeneration:predict"
+
+	cmd := exec.Command("curl", "-s", "-X", "POST",
+		"-H", fmt.Sprintf("Authorization: Bearer %s", token.AccessToken),
+		"-H", "Content-Type: application/json; charset=utf-8",
+		"-d", jsonStr,
 		endpoint)
 
-	fmt.Printf("Executing API request...\n")
-	curl := exec.Command("bash", "-c", curlCmd)
-	curl.Stdin = strings.NewReader(requestJSON)
-	curl.Stderr = os.Stderr
-
-	output, err := curl.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Printf("API request failed\n")
-		return nil, fmt.Errorf("failed to execute curl: %v", err)
+		return nil, fmt.Errorf("failed to execute curl command: %v", err)
 	}
-	fmt.Printf("API request successful\n")
 
-	return bytes.NewReader(output), nil
+	// レスポンスからbase64エンコードされた画像データを抽出
+	var response struct {
+		Predictions []struct {
+			BytesBase64Encoded string `json:"bytesBase64Encoded"`
+		} `json:"predictions"`
+	}
+
+	if err := json.Unmarshal(output, &response); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v, response: %s", err, string(output))
+	}
+
+	if len(response.Predictions) == 0 {
+		return nil, fmt.Errorf("no predictions in response: %s", string(output))
+	}
+
+	// base64デコード
+	imageBytes, err := base64.StdEncoding.DecodeString(response.Predictions[0].BytesBase64Encoded)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode base64: %v", err)
+	}
+
+	return imageBytes, nil
 }
