@@ -1,119 +1,89 @@
-# チュートリアルガイド
+# 開発チュートリアル
 
-## 🎯 概要
+このチュートリアルでは、作品解釈クイズサービスの開発方法について説明します。
 
-Zenn AI Agent Hackathon 2024-2025向けのAI画像ゲームバックエンドAPIを構築します。
+## 前提条件
 
-### プロジェクト情報
+1. Google Cloud Projectの設定
+   ```bash
+   export PROJECT_ID=zenn-ai-hackathon-2501
+   export LOCATION=asia-northeast1
+   ```
 
-- 言語：Go 1.22.5
-- プラットフォーム：Google Cloud Platform
-- 開発範囲：バックエンドAPI
+2. 必要なAPIの有効化
+   - Vertex AI API
+   - Cloud Storage API
 
-## 🔧 前提条件
+3. 認証設定
+   ```bash
+   gcloud auth application-default login
+   ```
 
-### 必要なツール
+## 作品と解釈の登録
 
-| ツール | バージョン | 用途 |
-|--------|------------|------|
-| Go | 1.22.5以上 | バックエンド開発 |
-| gcloud CLI | 最新 | GCPリソース管理 |
-| Docker | 最新 | ローカル開発・デプロイ |
-
-## 🚀 開発環境のセットアップ
-
-### 1. Google Cloudの設定
-
-```bash
-# GCPプロジェクトの設定
-gcloud config set project zenn-ai-hackathon-2501
-gcloud config set run/region us-east1
-
-# 必要なAPIの有効化
-gcloud services enable \
-  run.googleapis.com \
-  aiplatform.googleapis.com \
-  storage.googleapis.com
-```
-
-### 2. 必要なGoogle Cloudサービスの有効化
-
-- Vertex AI API
-- Cloud Storage API
-- Cloud Run API
-
-### 3. 認証設定
-
-- Google Cloud Console でサービスアカウントを作成
-- キーファイル（keyfile.json）をダウンロード
-- `config/credentials/` に配置
-
-## 💾 主要機能
-
-### 画像処理API
-
-1. オリジナル画像のアップロード（/upload）
-2. Vertex AIを使用した画像生成
-3. クイズ情報の取得（/questions）
-
-## 🔧 デプロイ手順
-
-### Cloud Runへのデプロイ
+### 1. 作品のアップロード
 
 ```bash
-gcloud run deploy zenn-ai --source .
+curl -X POST \
+  -F "file=@artwork.jpg" \
+  -F "interpretation=この作品では、都市の無機質な表面に映る自然光の反射を通じて、
+      現代社会における人工と自然の共生を表現しました。色彩の選択は、
+      朝もやに包まれた街並みをイメージし、静謐な雰囲気を醸成しています。" \
+  http://localhost:8080/upload
 ```
 
-### デプロイ後の確認
+### 2. レスポンス例
 
-### Cloud Storageの設定
+```json
+{
+  "quiz_id": "quiz_001",
+  "image_path": "/images/artwork.jpg",
+  "author_interpretation": "この作品では、都市の無機質な表面に映る自然光の反射を通じて...",
+  "ai_interpretation": "都市建築の幾何学的なパターンと光の干渉が生み出す視覚的リズムから、
+      現代都市における人間の存在と不在の二重性を読み取ることができます。
+      建物のファサードが織りなす影の変化は、都市生活の重層的な時間性を象徴しています。"
+}
+```
 
-- バケット名：zenn-ai-hackathon-2501_original_images
-- リージョン：us-east1
+## 作品解釈クイズの取得
 
-## 🏆 ハッカソン提出要件
+### 1. クイズデータの取得
 
-### 必須要件
+```bash
+curl http://localhost:8080/quiz/quiz_001
+```
 
-1. Google Cloud AIプロダクトの使用（最低1つ）
-   - 本プロジェクトではVertex AIを使用
+### 2. レスポンス例
 
-2. Google Cloudコンピュートプロダクトの使用（最低1つ）
-   - 本プロジェクトではCloud Runを使用
+```json
+{
+  "quiz_id": "quiz_001",
+  "image_path": "/images/artwork.jpg",
+  "interpretations": [
+    "この作品では、都市の無機質な表面に映る自然光の反射を通じて...",
+    "都市建築の幾何学的なパターンと光の干渉が生み出す視覚的リズムから..."
+  ]
+}
+```
 
-## 🐛 トラブルシューティング
+## 開発のポイント
 
-### よくあるエラー
+1. 作品解釈について
+   - 視覚的要素の具体的な説明
+   - 制作意図の明確な表現
+   - 技法や表現手法への言及
 
-1. 認証エラー
-   - keyfile.jsonの配置確認
-   - 環境変数の設定確認
-2. ストレージエラー
-   - バケットの権限設定
-   - リージョンの確認
+2. AIによる解釈生成
+   - 作品の文脈を考慮した分析
+   - 多角的な視点からの考察
+   - 技術的観察に基づく解釈
 
-## 📚 参考リンク
+3. エラーハンドリング
+   - 画像フォーマットの検証
+   - 解釈テキストの品質検証
+   - AIサービスの応答エラーへの対応
 
-### ハッカソン関連
+## 参考資料
 
-- [Zenn AI Agent Hackathon 公式ページ](https://zenn.dev/hackathons/2024-google-cloud-japan-ai-hackathon)
-
-### Vertex AI 関連
-
-- [Vertex AI ドキュメント](https://cloud.google.com/vertex-ai/docs)
-  - [サンプルコード](https://cloud.google.com/vertex-ai/docs/samples?language=golang)
-  - [Vertex AI Model Garden（公式）](https://console.cloud.google.com/vertex-ai/model-garden)
-- [Vertex AI API for Gemini](https://cloud.google.com/vertex-ai/generative-ai/docs/start/quickstarts/quickstart-multimodal?hl=ja)
-- [Vertex AIのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/vertexai)
-
-### その他のGCPサービス
-
-- [Google Cloud 公式ドキュメント](https://cloud.google.com/docs)
-- [Cloud Runのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/run)
-- [Cloud Storageのサンプルコード](https://github.com/GoogleCloudPlatform/golang-samples/tree/main/storage)
-- [Firebase ドキュメント](https://firebase.google.com/docs)
-- [Cloud Billing API](https://cloud.google.com/billing/docs/how-to/notify?hl=ja#cap_disable_billing_to_stop_usage)
-
-### 開発言語
-
-- [Go言語ドキュメント](https://golang.org/doc/)
+- [Vertex AI Gemini API リファレンス](https://cloud.google.com/vertex-ai/docs/reference)
+- [マルチモーダルAIの基礎](https://cloud.google.com/blog/products/ai-machine-learning)

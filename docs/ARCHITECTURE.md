@@ -2,13 +2,12 @@
 
 ## 📋 システム概要
 
-AI生成画像を活用したクイズゲームのバックエンドシステム
+作品とその解釈を組み合わせたマルチモーダルクイズゲームのバックエンドシステム
 
 ### プロジェクトの目的
 
-- オリジナル画像とAI生成画像を使用したクイズゲームの提供
-- Google Cloud AIサービスを活用した画像生成
-- スケーラブルなバックエンドAPIの実現
+- 作品に込められた作者の思いを理解する体験の提供
+- Vertex AI (Gemini Pro Vision)を活用した説得力のある解釈の生成
 
 ## 🏗 システムアーキテクチャ
 
@@ -20,15 +19,42 @@ graph TD
     
     subgraph "アプリケーション層"
         B -->|API呼び出し| C[Cloud Run]
-        C -->|画像生成| D[Vertex AI]
+        C -->|マルチモーダル処理| D[Vertex AI Gemini Pro Vision]
         C -->|データ保存/取得| E[Cloud Storage]
     end
     
     subgraph "データ層"
-        E -->|画像データ| G[オリジナル画像]
-        E -->|生成画像| H[AI生成画像]
-        E -->|メタデータ| I[questions.json]
+        E -->|作品データ| G[作品画像]
+        E -->|メタデータ| I[quizzes.json]
     end
+```
+
+## 🔧 コンポーネント構成
+
+### 1. APIサーバー (`cmd/server/main.go`)
+- HTTPリクエストの受付とルーティング
+- リクエストの検証とエラーハンドリング
+- レスポンスの整形と返却
+
+### 2. クイズサービス (`internal/service/quiz.go`)
+- クイズデータの生成・管理
+- 作品と作者コメントの組み合わせ処理
+- 回答の検証とスコア管理
+
+### 3. AIクライアント (`internal/ai/client.go`)
+- Gemini Pro Visionモデルとの通信
+- 画像とテキストの統合的理解
+- コンテキストを考慮した解釈生成
+
+### 4. データモデル (`internal/models/types.go`)
+```go
+type Quiz struct {
+    ID            string    `json:"id"`
+    ImagePath     string    `json:"image_path"`
+    RealComment   string    `json:"real_comment"`    // 本物の作者のコメント
+    FakeComment   string    `json:"fake_comment"`    // AIが生成したコメント
+    CreatedAt     time.Time `json:"created_at"`
+}
 ```
 
 ## 🔧 技術スタック
@@ -48,34 +74,38 @@ graph TD
 
 ## 📡 API仕様
 
-### 1. 画像アップロードAPI
-
+### 1. クイズ作成 API
 ```yaml
-POST /api/v1/upload
+POST /upload
 Content-Type: multipart/form-data
 
 リクエスト:
   - file: バイナリ（画像ファイル）
-  - metadata: JSON（タイトル、説明等）
+  - comment: テキスト（作者のコメント）
 
 レスポンス:
-  - image_id: string
-  - storage_url: string
-  - status: string
+{
+    "quiz_id": "xxx",
+    "image_path": "/images/xxx.jpg",
+    "real_comment": "作者のコメント",
+    "fake_comment": "AIが生成したコメント"
+}
 ```
 
-### 2. クイズ取得API
-
+### 2. クイズ取得 API
 ```yaml
-GET /api/v1/questions
+GET /quiz/{id}
 Content-Type: application/json
 
 レスポンス:
-  - questions: Question[]
-    - id: string
-    - original_image: string
-    - fake_images: string[]
-    - correct_index: number
+{
+    "quiz_id": "xxx",
+    "image_path": "/images/xxx.jpg",
+    "comments": [
+        "コメント1",  // 本物か偽物かはランダムに並び替え
+        "コメント2"
+    ]
+}
 ```
 
 ## 🔒 セキュリティ設計
@@ -95,28 +125,22 @@ Content-Type: application/json
 ## 💾 データ構造
 
 ### Cloud Storageバケット構成
-
 ```bash
 zenn-ai-hackathon-2501/
-├── original/           # オリジナル画像
-├── generated/          # AI生成画像
+├── images/            # オリジナル画像
 └── metadata/
-    └── questions.json  # クイズデータ
+    └── quizzes.json  # クイズデータ
 ```
 
-### クイズデータ（questions.json）
-
+### クイズデータ（quizzes.json）
 ```json
 {
-  "questions": [
+  "quizzes": [
     {
       "id": "quiz_001",
-      "original_image": "original/image1.jpg",
-      "fake_images": [
-        "generated/image1_fake1.jpg",
-        "generated/image1_fake2.jpg"
-      ],
-      "correct_index": 0,
+      "image_path": "images/image1.jpg",
+      "real_comment": "この作品では、都市の喧騒の中に潜む静寂を表現しました。光と影の対比を通じて...",
+      "fake_comment": "都市開発と自然保護の葛藤をテーマに、建築物と緑地の境界線を捉えました...",
       "created_at": "2024-03-20T10:00:00Z"
     }
   ]
@@ -164,3 +188,26 @@ zenn-ai-hackathon-2501/
 - ユニットテスト
 - 統合テスト
 - 負荷テスト
+
+## 🔄 処理フロー詳細
+
+1. クイズ作成フロー
+   ```mermaid
+   sequenceDiagram
+       Client->>+Server: 作品画像・作者コメントのアップロード
+       Server->>+Storage: 画像の保存
+       Server->>+Gemini: 画像・コメント解析
+       Gemini->>-Server: 新しい解釈の生成
+       Server->>Storage: クイズデータの保存
+       Server->>-Client: クイズID・結果の返却
+   ```
+
+2. クイズ取得フロー
+   ```mermaid
+   sequenceDiagram
+       Client->>+Server: クイズIDでリクエスト
+       Server->>+Storage: データ取得
+       Storage->>-Server: クイズデータ
+       Server->>Server: コメントのシャッフル
+       Server->>-Client: 画像・コメント返却
+   ```
