@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"time"
 
 	"zenn_ai_hackathon_2501_backend/internal/models"
@@ -72,21 +73,22 @@ func (c *Client) UpdateQuestions(ctx context.Context, questions models.Questions
 // GenerateSignedURL は、指定されたオブジェクトの署名付きURLを生成します。
 // このURLは、オブジェクトの読み取り専用アクセスを許可し、有効期限が15分間です。
 func (c *Client) GenerateSignedURL(ctx context.Context, objectPath string) (string, error) {
-	log.Printf("Generating signed URL for: %s", objectPath)
+	log.Printf("Starting to generate signed URL for: %s", objectPath)
 
-	credentials, err := google.FindDefaultCredentials(ctx, storage.ScopeReadOnly)
+	// キーファイルを直接読み込む
+	credBytes, err := os.ReadFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 	if err != nil {
-		log.Printf("Error getting credentials: %v", err)
-		return "", fmt.Errorf("failed to get credentials: %v", err)
+		log.Printf("Error reading credentials file: %v", err)
+		return "", fmt.Errorf("failed to read credentials: %v", err)
 	}
-	log.Printf("Got credentials successfully")
+	log.Printf("Successfully read credentials file")
 
-	conf, err := google.JWTConfigFromJSON(credentials.JSON)
+	conf, err := google.JWTConfigFromJSON(credBytes)
 	if err != nil {
-		log.Printf("Error getting JWT config: %v", err)
-		return "", fmt.Errorf("failed to get JWT config: %v", err)
+		log.Printf("Error parsing JWT config: %v", err)
+		return "", fmt.Errorf("failed to parse JWT config: %v", err)
 	}
-	log.Printf("Using service account email: %s", conf.Email)
+	log.Printf("Successfully parsed JWT config, using email: %s", conf.Email)
 
 	opts := &storage.SignedURLOptions{
 		Scheme:         storage.SigningSchemeV4,
@@ -101,7 +103,7 @@ func (c *Client) GenerateSignedURL(ctx context.Context, objectPath string) (stri
 		log.Printf("Error generating signed URL: %v", err)
 		return "", err
 	}
-	log.Printf("Successfully generated signed URL")
+	log.Printf("Successfully generated signed URL for: %s", objectPath)
 
 	return url, nil
 }
