@@ -211,9 +211,13 @@ go run cmd/server/main.go
 
 # 別ターミナルで確認 1
 apple@kenty-work-mac zenn_ai_hackathon_2501_backend % curl -X POST -F "file=@test.jpg" http://localhost:8080/upload > upload_test.log
-{...}
+{
+  "image_id": "image_1739153304",
+  "storage_url": "gs://zenn-ai-hackathon-2501/original/image_1739153304.png",
+  "status": "success"
+}
 
 # 別ターミナルで確認 2
-curl http://localhost:8080/questions
-{...}
+curl http://localhost:8080/questions    
+{"questions":[..(省略)..,{"id":"image_1739153304","original_image":"original/image_1739153304.png","fake_images":["generated/image_1739153304_fake0.png","generated/image_1739153304_fake1.png","generated/image_1739153304_fake2.png"],"correct_index":0,"created_at":"2025-02-10T02:08:34Z"}]}
 ```
