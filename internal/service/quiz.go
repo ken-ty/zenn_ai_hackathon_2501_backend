@@ -15,29 +15,36 @@ import (
 )
 
 type QuizService struct {
-	storageClient *storage.Client
-	aiClient      *ai.Client
+	storageClient  *storage.Client
+	aiClient       *ai.Client
+	imageValidator ImageValidatorInterface
 }
 
 func NewQuizService(storageClient *storage.Client, aiClient *ai.Client) *QuizService {
 	return &QuizService{
-		storageClient: storageClient,
-		aiClient:      aiClient,
+		storageClient:  storageClient,
+		aiClient:       aiClient,
+		imageValidator: NewImageValidator(10 * 1024 * 1024), // 10MB
 	}
 }
 
 func (s *QuizService) CreateQuiz(ctx context.Context, file io.Reader, filename string) (*models.UploadResponse, error) {
-	// ファイル名の生成
+	// 画像の検証とバッファへのコピー
+	buf, err := s.imageValidator.ValidateAndCopy(file, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// 以降は既存の処理
 	imageID := fmt.Sprintf("image_%d", time.Now().Unix())
 	storagePath := fmt.Sprintf("original/%s%s", imageID, filepath.Ext(filename))
 
-	// オリジナル画像のアップロード
-	if err := s.storageClient.UploadFile(ctx, storagePath, file); err != nil {
+	if err := s.storageClient.UploadFile(ctx, storagePath, bytes.NewReader(buf.Bytes())); err != nil {
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	// AI生成画像の作成
-	fakeImages, err := s.generateFakeImages(ctx, file, imageID, filename)
+	fakeImages, err := s.generateFakeImages(ctx, bytes.NewReader(buf.Bytes()), imageID, filename)
 	if err != nil {
 		return nil, err
 	}
