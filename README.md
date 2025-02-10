@@ -1,5 +1,7 @@
 # AI Art Quiz
 
+[![codecov](https://codecov.io/gh/ken-ty/zenn_ai_hackathon_2501_backend/graph/badge.svg)](https://codecov.io/gh/ken-ty/zenn_ai_hackathon_2501_backend)
+
 AIを活用したアート作品の解釈クイズアプリケーション
 
 ## 概要
