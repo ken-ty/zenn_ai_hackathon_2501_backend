@@ -24,7 +24,16 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
-        cache: true
+
+    - name: Go Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
 
     - name: Install dependencies
       run: go mod download
@@ -36,7 +45,9 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.txt
+        files: ./coverage.txt
+        flags: unittests
+        name: codecov-umbrella
         fail_ci_if_error: true
         verbose: true
 
@@ -51,10 +62,11 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.21'
-        cache: true
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
         args: --timeout=5m
+        skip-pkg-cache: true
+        skip-build-cache: true
