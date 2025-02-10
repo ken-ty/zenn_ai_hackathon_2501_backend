@@ -1,101 +1,139 @@
-# AI Art Quiz - マルチモーダルクイズゲーム
+# AI Art Quiz
+
+AIを活用したアート作品の解釈クイズアプリケーション
 
 ## 概要
 
-このプロジェクトは、作品に込められた作者の意図とAIが生成した代替解釈を比較し、芸術作品への理解を深めるクイズゲームのバックエンドAPIです。
+このアプリケーションは、作品とその解釈を組み合わせたマルチモーダルクイズゲームのバックエンドシステムです。
+Vertex AI (Gemini Pro Vision)を活用して、作品に対する説得力のある代替解釈を生成します。
 
-## 特徴
+## 機能
 
-- 視覚と言語を組み合わせたマルチモーダルな芸術体験
-- Vertex AI (Gemini Pro Vision)を活用した深い作品解釈の生成
+- 作品画像のアップロード
+- 作者による解釈の登録
+- AIによる代替解釈の生成
+- クイズの作成と保存
+- ランダム化された解釈の提供
+- 回答の検証
 
-## 技術スタック
+## 必要条件
 
-- Go 1.21
-- Google Cloud Platform
-  - Vertex AI (Gemini Pro Vision)
-  - Cloud Run
-  - Cloud Storage
+- Go 1.21以上
+- Google Cloud Platform アカウント
+- 以下のAPIの有効化:
+  - Cloud Storage API
+  - Vertex AI API
 
-## 主要機能
+## 環境変数
 
-1. クイズ作成
-   - 作品と作者の解釈のアップロード
-   - AIによる代替解釈の生成
-   - クイズデータの保存
-
-2. クイズ取得
-   - 画像の取得
-   - 解釈のランダム表示
-   - 結果の検証
-
-## 開発環境のセットアップ
-
-1. 必要なツール
-   - Go 1.21以上
-   - Google Cloud SDK
-
-2. 環境変数の設定
-
-   ```bash
-   export PROJECT_ID=zenn-ai-hackathon-2501
-   export LOCATION=asia-northeast1
-   ```
-
-3. 依存関係のインストール
-
-   ```bash
-   go mod tidy
-   ```
-
-## APIの使用方法
-
-詳細は以下のドキュメントを参照してください：
-
-- [チュートリアル](docs/TUTORIAL.md)
-- [アーキテクチャ設計](docs/ARCHITECTURE.md)
-- [ゲームルール](docs/RULES.md)
-
-## 使用例
-
-### 作品の登録
 ```bash
-curl -X POST \
-  -F "file=@artwork.jpg" \
-  -F "interpretation=この作品では、都市の無機質な表面に映る自然光の反射を通じて..." \
-  http://localhost:8080/upload
+# 必須
+PROJECT_ID=your-project-id
+BUCKET_NAME=your-bucket-name
+
+# オプション（デフォルト値あり）
+LOCATION=us-central1  # Vertex AIのリージョン
+PORT=8080            # サーバーのポート番号
 ```
 
-### クイズの取得
+## インストール
+
 ```bash
-curl http://localhost:8080/quiz/quiz_001
+# リポジトリのクローン
+git clone https://github.com/zenn-dev/zenn-ai-hackathon.git
+cd zenn-ai-hackathon
+
+# 依存関係のインストール
+go mod download
+```
+
+## 使用方法
+
+### サーバーの起動
+
+```bash
+# 環境変数の設定
+export PROJECT_ID=your-project-id
+export BUCKET_NAME=your-bucket-name
+
+# サーバーの起動
+go run cmd/server/main.go
+```
+
+### APIの利用
+
+#### 1. クイズの作成
+
+```bash
+curl -X POST http://localhost:8080/upload \
+  -F "file=@artwork.jpg" \
+  -F "interpretation=作者による解釈のテキスト"
+```
+
+レスポンス:
+```json
+{
+  "id": "quiz_1234567890",
+  "image_path": "/images/artwork.jpg",
+  "author_interpretation": "作者による解釈のテキスト",
+  "ai_interpretation": "AIによる代替解釈のテキスト",
+  "created_at": "2024-03-20T10:00:00Z"
+}
+```
+
+#### 2. クイズの取得
+
+```bash
+curl http://localhost:8080/quiz/quiz_1234567890
+```
+
+レスポンス:
+```json
+{
+  "id": "quiz_1234567890",
+  "image_path": "/images/artwork.jpg",
+  "interpretations": [
+    "作者による解釈のテキスト",
+    "AIによる代替解釈のテキスト"
+  ]
+}
+```
+
+## テスト
+
+```bash
+# すべてのテストを実行
+go test ./...
+
+# カバレッジレポートの生成
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+## デプロイ
+
+```bash
+# Cloud Runへのデプロイ
+gcloud run deploy ai-art-quiz \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --set-env-vars PROJECT_ID=your-project-id,BUCKET_NAME=your-bucket-name
 ```
 
 ## ライセンス
 
-このプロジェクトはMITライセンスの下で公開されています。
+MIT License
 
 ## 貢献
 
 1. このリポジトリをフォーク
-2. 機能開発用のブランチを作成
-3. 変更をコミット
-4. プルリクエストを作成
+2. 新しいブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチをプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
 
-## 開発ガイドライン
+## 関連ドキュメント
 
-- 作品解釈の品質を重視
-- ユーザー体験の一貫性を保持
-- セキュリティとプライバシーの確保
-- パフォーマンスの最適化
-
-## 開発者
-
-- [開発者名]
-- [連絡先]
-
-## 謝辞
-
-- Google Cloud Japan
-- Zenn
-- ハッカソン運営チーム
+- [アーキテクチャ設計](docs/ARCHITECTURE.md)
+- [API仕様](docs/API.md)

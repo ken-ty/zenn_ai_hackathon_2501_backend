@@ -1,213 +1,153 @@
-# AI画像ゲーム システム設計書
+# アーキテクチャ設計
 
-## 📋 システム概要
+## システム概要
 
-作品とその解釈を組み合わせたマルチモーダルクイズゲームのバックエンドシステム
+AI Art Quizは、作品の解釈を通じて芸術への理解を深めるクイズゲームのバックエンドシステムです。
+マルチモーダルAIを活用して、作品に対する代替的な解釈を生成します。
 
-### プロジェクトの目的
+## アーキテクチャの特徴
 
-- 作品に込められた作者の思いを理解する体験の提供
-- Vertex AI (Gemini Pro Vision)を活用した説得力のある解釈の生成
+1. クリーンアーキテクチャの採用
+   - 依存関係の方向を内側に向ける
+   - ビジネスロジックの独立性を確保
+   - テスト容易性の向上
 
-## 🏗 システムアーキテクチャ
+2. マイクロサービス指向
+   - 独立したデプロイ
+   - スケーラビリティの確保
+   - 責務の明確な分離
+
+## コンポーネント構成
+
+```
+internal/
+├── ai/          # AI関連の実装
+│   ├── client.go
+│   └── client_test.go
+├── config/      # 設定管理
+│   ├── config.go
+│   └── config_test.go
+├── models/      # ドメインモデル
+│   └── quiz.go
+├── server/      # HTTPサーバー
+│   ├── server.go
+│   └── server_test.go
+├── service/     # ビジネスロジック
+│   ├── quiz.go
+│   └── quiz_test.go
+└── storage/     # データストレージ
+    ├── storage.go
+    └── storage_test.go
+```
+
+## レイヤー構造
+
+1. プレゼンテーション層 (`server/`)
+   - HTTPリクエストの処理
+   - レスポンスの生成
+   - バリデーション
+
+2. ビジネスロジック層 (`service/`)
+   - クイズの生成
+   - 解釈の管理
+   - スコアリング
+
+3. データアクセス層 (`storage/`)
+   - 画像の保存
+   - メタデータの管理
+   - キャッシュ制御
+
+4. 外部サービス層 (`ai/`)
+   - Vertex AIとの通信
+   - プロンプトの管理
+   - エラーハンドリング
+
+## 依存性の管理
 
 ```mermaid
 graph TD
-    subgraph "クライアント層"
-        A[プレイヤー] --> B[Frontend]
-    end
-    
-    subgraph "アプリケーション層"
-        B -->|API呼び出し| C[Cloud Run]
-        C -->|マルチモーダル処理| D[Vertex AI Gemini Pro Vision]
-        C -->|データ保存/取得| E[Cloud Storage]
-    end
-    
-    subgraph "データ層"
-        E -->|作品データ| G[作品画像]
-        E -->|メタデータ| I[quizzes.json]
-    end
+    Server[server] --> Service[service]
+    Service --> Storage[storage]
+    Service --> AI[ai]
+    Service --> Models[models]
+    Storage --> Models
+    AI --> Models
 ```
 
-## 🔧 コンポーネント構成
-
-### 1. APIサーバー (`cmd/server/main.go`)
-- HTTPリクエストの受付とルーティング
-- リクエストの検証とエラーハンドリング
-- レスポンスの整形と返却
-
-### 2. クイズサービス (`internal/service/quiz.go`)
-- クイズデータの生成・管理
-- 作品と作者コメントの組み合わせ処理
-- 回答の検証とスコア管理
-
-### 3. AIクライアント (`internal/ai/client.go`)
-- Gemini Pro Visionモデルとの通信
-- 画像とテキストの統合的理解
-- コンテキストを考慮した解釈生成
-
-### 4. データモデル (`internal/models/types.go`)
-```go
-type Quiz struct {
-    ID            string    `json:"id"`
-    ImagePath     string    `json:"image_path"`
-    RealComment   string    `json:"real_comment"`    // 本物の作者のコメント
-    FakeComment   string    `json:"fake_comment"`    // AIが生成したコメント
-    CreatedAt     time.Time `json:"created_at"`
-}
-```
-
-## 🔧 技術スタック
-
-### バックエンド
-
-- 言語：Go 1.22.5
-- フレームワーク：標準ライブラリ
-
-### クラウドサービス
-
-| サービス | 用途 | 選定理由 |
-|---------|------|---------|
-| Cloud Run | APIサーバー | スケーラビリティ、コスト効率 |
-| Vertex AI | 画像生成 | 高品質な画像生成、APIの安定性 |
-| Cloud Storage | 画像・メタデータ保存 | 大容量データの効率的な管理 |
-
-## 📡 API仕様
-
-### 1. クイズ作成 API
-```yaml
-POST /upload
-Content-Type: multipart/form-data
-
-リクエスト:
-  - file: バイナリ（画像ファイル）
-  - comment: テキスト（作者のコメント）
-
-レスポンス:
-{
-    "quiz_id": "xxx",
-    "image_path": "/images/xxx.jpg",
-    "real_comment": "作者のコメント",
-    "fake_comment": "AIが生成したコメント"
-}
-```
-
-### 2. クイズ取得 API
-```yaml
-GET /quiz/{id}
-Content-Type: application/json
-
-レスポンス:
-{
-    "quiz_id": "xxx",
-    "image_path": "/images/xxx.jpg",
-    "comments": [
-        "コメント1",  // 本物か偽物かはランダムに並び替え
-        "コメント2"
-    ]
-}
-```
-
-## 🔒 セキュリティ設計
-
-### データ保護
-
-- Cloud Storageでの暗号化
-- 署名付きURLによるアクセス制御
-- Cloud KMSによる鍵管理
-
-### アクセス制御
-
-- Cloud IAMによる権限管理
-- APIキーによる認証
-- レート制限の実装
-
-## 💾 データ構造
-
-### Cloud Storageバケット構成
-```bash
-zenn-ai-hackathon-2501/
-├── images/            # オリジナル画像
-└── metadata/
-    └── quizzes.json  # クイズデータ
-```
-
-### クイズデータ（quizzes.json）
-```json
-{
-  "quizzes": [
-    {
-      "id": "quiz_001",
-      "image_path": "images/image1.jpg",
-      "real_comment": "この作品では、都市の喧騒の中に潜む静寂を表現しました。光と影の対比を通じて...",
-      "fake_comment": "都市開発と自然保護の葛藤をテーマに、建築物と緑地の境界線を捉えました...",
-      "created_at": "2024-03-20T10:00:00Z"
-    }
-  ]
-}
-```
-
-## 📈 パフォーマンス最適化
-
-### キャッシュ戦略
-
-- Cloud CDNの活用
-- 画像のキャッシュヘッダー設定
-- メタデータの適切なキャッシュ制御
-
-### 並行処理
-
-- 画像生成の非同期処理
-- バッチ処理による効率化
-- エラーハンドリングとリトライ
-
-## 🚀 デプロイメント
-
-### CI/CD
-
-- GitHub Actionsによる自動デプロイ
-- テスト自動化
-- 段階的なロールアウト
-
-### 監視
-
-- Cloud Monitoringによるメトリクス収集
-- Cloud Loggingによる監査ログ
-- アラート設定
-
-## 📝 開発ガイドライン
-
-### コーディング規約
-
-- Goの標準規約に準拠
-- エラーハンドリングの統一
-- ログ出力の標準化
-
-### テスト戦略
-
-- ユニットテスト
-- 統合テスト
-- 負荷テスト
-
-## 🔄 処理フロー詳細
+## データフロー
 
 1. クイズ作成フロー
    ```mermaid
    sequenceDiagram
-       Client->>+Server: 作品画像・作者コメントのアップロード
-       Server->>+Storage: 画像の保存
-       Server->>+Gemini: 画像・コメント解析
-       Gemini->>-Server: 新しい解釈の生成
-       Server->>Storage: クイズデータの保存
-       Server->>-Client: クイズID・結果の返却
+       Client->>Server: POST /upload
+       Server->>Service: CreateQuiz()
+       Service->>Storage: SaveImage()
+       Service->>AI: GenerateInterpretation()
+       Service->>Storage: SaveQuiz()
+       Server->>Client: Quiz Response
    ```
 
 2. クイズ取得フロー
    ```mermaid
    sequenceDiagram
-       Client->>+Server: クイズIDでリクエスト
-       Server->>+Storage: データ取得
-       Storage->>-Server: クイズデータ
-       Server->>Server: コメントのシャッフル
-       Server->>-Client: 画像・コメント返却
+       Client->>Server: GET /quiz/{id}
+       Server->>Service: GetQuiz()
+       Service->>Storage: GetQuiz()
+       Service->>Service: RandomizeInterpretations()
+       Server->>Client: Quiz Response
    ```
+
+## セキュリティ設計
+
+1. 認証・認可
+   - Cloud Run IAM
+   - サービスアカウント
+
+2. データ保護
+   - Cloud Storage暗号化
+   - セキュアな通信
+
+3. 入力検証
+   - ファイルタイプ
+   - サイズ制限
+   - XSS対策
+
+## スケーラビリティ
+
+1. 水平スケーリング
+   - Cloud Runの自動スケーリング
+   - ステートレスな設計
+
+2. パフォーマンス最適化
+   - 画像の最適化
+   - キャッシュ戦略
+   - 非同期処理
+
+## 監視と運用
+
+1. ロギング
+   - Cloud Logging
+   - 構造化ログ
+   - エラートラッキング
+
+2. メトリクス
+   - レイテンシー
+   - エラーレート
+   - リソース使用率
+
+3. アラート
+   - エラー閾値
+   - リソース枯渇
+   - 異常検知
+
+## 今後の展開
+
+1. 機能拡張
+   - ユーザー管理
+   - ソーシャル機能
+   - 統計分析
+
+2. 技術的改善
+   - キャッシュ層の追加
+   - CDNの導入
+   - バッチ処理の最適化

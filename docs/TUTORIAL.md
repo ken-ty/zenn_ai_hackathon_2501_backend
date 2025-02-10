@@ -7,7 +7,7 @@
 1. Google Cloud Projectの設定
    ```bash
    export PROJECT_ID=zenn-ai-hackathon-2501
-   export LOCATION=asia-northeast1
+   export LOCATION=us-central1
    ```
 
 2. 必要なAPIの有効化

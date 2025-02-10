@@ -1,19 +1,17 @@
 package models
 
-type Question struct {
-	ID            string   `json:"id"`
-	OriginalImage string   `json:"original_image"`
-	FakeImages    []string `json:"fake_images"`
-	CorrectIndex  int      `json:"correct_index"`
-	CreatedAt     string   `json:"created_at"`
+import "time"
+
+// Quiz はクイズのデータモデルを表します
+type Quiz struct {
+	ID                   string    `json:"id"`
+	ImagePath            string    `json:"image_path"`
+	AuthorInterpretation string    `json:"author_interpretation"`
+	AIInterpretation     string    `json:"ai_interpretation"`
+	CreatedAt            time.Time `json:"created_at"`
 }
 
-type QuestionsResponse struct {
-	Questions []Question `json:"questions"`
-}
-
-type UploadResponse struct {
-	ImageID    string `json:"image_id"`
-	StorageURL string `json:"storage_url"`
-	Status     string `json:"status"`
+// QuizList はクイズのリストを表します
+type QuizList struct {
+	Quizzes []*Quiz `json:"quizzes"`
 }

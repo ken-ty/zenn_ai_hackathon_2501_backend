@@ -1,24 +1,9 @@
-FROM golang:1.21-alpine
-
-# Cloud SDKの依存関係をインストール
-RUN apk add --no-cache \
-    python3 \
-    py3-pip \
-    curl \
-    bash
-
-# Cloud SDKのインストール
-RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-458.0.0-linux-x86_64.tar.gz && \
-    tar -xf google-cloud-cli-458.0.0-linux-x86_64.tar.gz && \
-    ./google-cloud-sdk/install.sh --quiet && \
-    rm google-cloud-cli-458.0.0-linux-x86_64.tar.gz
-
-# PATHにCloud SDKを追加
-ENV PATH $PATH:/google-cloud-sdk/bin
+# ビルドステージ
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# 依存関係のコピーとインストール
+# 依存関係のインストール
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -26,14 +11,25 @@ RUN go mod download
 COPY . .
 
 # アプリケーションのビルド
-RUN go build -o /server cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
 
-# サービスアカウントキーのコピー
-COPY config/credentials/keyfile.json /keyfile.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=/keyfile.json
+# 実行ステージ
+FROM alpine:latest
 
-# ポートの設定
-ENV PORT=8080
+WORKDIR /app
+
+# ビルドしたバイナリのコピー
+COPY --from=builder /app/server .
+
+# 必要な証明書のインストール
+RUN apk --no-cache add ca-certificates
+
+# 実行ユーザーの設定
+RUN adduser -D -g '' appuser
+USER appuser
+
+# ポートの公開
 EXPOSE 8080
 
-CMD ["/server"] 
+# アプリケーションの実行
+CMD ["./server"] 

@@ -1,159 +1,106 @@
 package service
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"path/filepath"
 	"time"
 
-	"zenn_ai_hackathon_2501_backend/internal/ai"
-	"zenn_ai_hackathon_2501_backend/internal/models"
-	"zenn_ai_hackathon_2501_backend/internal/storage"
+	"github.com/zenn-dev/zenn-ai-hackathon/internal/ai"
+	"github.com/zenn-dev/zenn-ai-hackathon/internal/models"
+	"github.com/zenn-dev/zenn-ai-hackathon/internal/storage"
 )
 
+// QuizService はクイズ関連の操作を提供します
 type QuizService struct {
-	storageClient  *storage.Client
-	aiClient       *ai.Client
-	imageValidator ImageValidatorInterface
+	aiClient      ai.AIClient
+	storageClient storage.StorageClient
 }
 
-func NewQuizService(storageClient *storage.Client, aiClient *ai.Client) *QuizService {
+// NewQuizService は新しいQuizServiceインスタンスを作成します
+func NewQuizService(aiClient ai.AIClient, storageClient storage.StorageClient) *QuizService {
 	return &QuizService{
-		storageClient:  storageClient,
-		aiClient:       aiClient,
-		imageValidator: NewImageValidator(10 * 1024 * 1024), // 10MB
+		aiClient:      aiClient,
+		storageClient: storageClient,
 	}
 }
 
-func (s *QuizService) CreateQuiz(ctx context.Context, file io.Reader, filename string) (*models.UploadResponse, error) {
-	buf, err := s.imageValidator.ValidateAndCopy(file, filename)
+// CreateQuiz は新しいクイズを作成します
+func (s *QuizService) CreateQuiz(ctx context.Context, imageData []byte, authorInterpretation string) (*models.Quiz, error) {
+	// 入力値の検証
+	if len(imageData) == 0 {
+		return nil, fmt.Errorf("画像データが必要です")
+	}
+	if authorInterpretation == "" {
+		return nil, fmt.Errorf("作者の解釈が必要です")
+	}
+
+	// 画像の保存
+	imagePath, err := s.storageClient.SaveImage(ctx, imageData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("画像の保存に失敗: %w", err)
 	}
 
-	imageID := fmt.Sprintf("image_%d", time.Now().Unix())
-	storagePath := s.generateStoragePath(imageID, nil, filepath.Ext(filename))
-
-	// オリジナル画像を保存
-	if err := s.saveImageToStorage(ctx, buf.Bytes(), storagePath); err != nil {
-		return nil, fmt.Errorf("failed to upload original file: %w", err)
-	}
-
-	// Fake画像を生成して保存
-	fakeImages, err := s.generateAndStoreFakeImages(ctx, bytes.NewReader(buf.Bytes()), imageID, filename)
+	// AIによる代替解釈の生成
+	aiInterpretation, err := s.aiClient.GenerateInterpretation(ctx, imageData, authorInterpretation)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("AIによる解釈の生成に失敗: %w", err)
 	}
 
-	// クイズデータの更新
-	if err := s.updateQuizData(ctx, imageID, storagePath, fakeImages); err != nil {
-		return nil, err
+	// クイズの作成
+	quiz := &models.Quiz{
+		ID:                   generateID(),
+		ImagePath:            imagePath,
+		AuthorInterpretation: authorInterpretation,
+		AIInterpretation:     aiInterpretation,
+		CreatedAt:            time.Now(),
 	}
 
-	return &models.UploadResponse{
-		ImageID:    imageID,
-		StorageURL: fmt.Sprintf("gs://zenn-ai-hackathon-2501/%s", storagePath),
-		Status:     "success",
-	}, nil
+	// クイズの保存
+	if err := s.storageClient.SaveQuiz(ctx, quiz); err != nil {
+		return nil, fmt.Errorf("クイズの保存に失敗: %w", err)
+	}
+
+	return quiz, nil
 }
 
-func (s *QuizService) GetQuizzes(ctx context.Context) (*models.QuestionsResponse, error) {
-	// クイズデータの取得
-	reader, err := s.storageClient.GetFile(ctx, "metadata/questions.json")
+// GetQuiz は指定されたIDのクイズを取得します
+func (s *QuizService) GetQuiz(ctx context.Context, quizID string) (*models.Quiz, error) {
+	if quizID == "" {
+		return nil, fmt.Errorf("クイズIDが必要です")
+	}
+
+	quiz, err := s.storageClient.GetQuiz(ctx, quizID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read questions: %w", err)
+		return nil, fmt.Errorf("クイズの取得に失敗: %w", err)
 	}
 
-	var response models.QuestionsResponse
-	if err := json.NewDecoder(reader).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to decode questions: %w", err)
-	}
-
-	// 署名付きURLの生成
-	if err := s.generateSignedURLs(ctx, &response); err != nil {
-		return nil, err
-	}
-
-	return &response, nil
+	return quiz, nil
 }
 
-func (s *QuizService) generateAndStoreFakeImages(ctx context.Context, file io.Reader, imageID, filename string) ([]string, error) {
-	var fakeImages []string
-	for i := 0; i < 3; i++ {
-		prompt := fmt.Sprintf("画像に基づいて、似ているが少し異なる画像を生成してください。変更点：%d", i+1)
-
-		generatedImageBytes, err := s.aiClient.GenerateImage(ctx, prompt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate image: %w", err)
-		}
-
-		fakePath := s.generateStoragePath(imageID, &i, filepath.Ext(filename))
-
-		// 生成画像を保存
-		if err := s.saveImageToStorage(ctx, generatedImageBytes, fakePath); err != nil {
-			return nil, fmt.Errorf("failed to upload generated image: %w", err)
-		}
-
-		fakeImages = append(fakeImages, fakePath)
+// GetRandomizedInterpretations は解釈をランダムな順序で返します
+func (s *QuizService) GetRandomizedInterpretations(quiz *models.Quiz) []string {
+	interpretations := []string{
+		quiz.AuthorInterpretation,
+		quiz.AIInterpretation,
 	}
-
-	return fakeImages, nil
+	shuffle(interpretations)
+	return interpretations
 }
 
-func (s *QuizService) updateQuizData(ctx context.Context, imageID, storagePath string, fakeImages []string) error {
-	reader, err := s.storageClient.GetFile(ctx, "metadata/questions.json")
-	if err != nil {
-		return fmt.Errorf("failed to read questions: %w", err)
-	}
-
-	var questions models.QuestionsResponse
-	if err := json.NewDecoder(reader).Decode(&questions); err != nil {
-		return fmt.Errorf("failed to decode questions: %w", err)
-	}
-
-	newQuestion := models.Question{
-		ID:            imageID,
-		OriginalImage: storagePath,
-		FakeImages:    fakeImages,
-		CorrectIndex:  0,
-		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
-	}
-	questions.Questions = append(questions.Questions, newQuestion)
-
-	return s.storageClient.UpdateQuestions(ctx, questions)
+// VerifyAnswer は回答が正しいかを検証します
+func (s *QuizService) VerifyAnswer(quiz *models.Quiz, selectedInterpretation string) bool {
+	return selectedInterpretation == quiz.AuthorInterpretation
 }
 
-func (s *QuizService) generateSignedURLs(ctx context.Context, response *models.QuestionsResponse) error {
-	for i := range response.Questions {
-		signedURL, err := s.storageClient.GenerateSignedURL(ctx, response.Questions[i].OriginalImage)
-		if err == nil {
-			response.Questions[i].OriginalImage = signedURL
-		}
-
-		for j, fakePath := range response.Questions[i].FakeImages {
-			signedURL, err := s.storageClient.GenerateSignedURL(ctx, fakePath)
-			if err == nil {
-				response.Questions[i].FakeImages[j] = signedURL
-			}
-		}
-	}
-	return nil
+// generateID は一意のIDを生成します
+func generateID() string {
+	return fmt.Sprintf("quiz_%d", time.Now().UnixNano())
 }
 
-// saveImageToStorage は画像をCloud Storageに保存するヘルパー関数です
-func (s *QuizService) saveImageToStorage(ctx context.Context, imageData []byte, path string) error {
-	return s.storageClient.UploadFile(ctx, path, bytes.NewReader(imageData))
-}
-
-// generateStoragePath はストレージパスを生成するヘルパー関数です
-// index == nil の場合はオリジナル画像のパスを生成
-// index != nil の場合は生成画像のパスを生成
-func (s *QuizService) generateStoragePath(imageID string, index *int, ext string) string {
-	if index == nil {
-		return fmt.Sprintf("original/%s%s", imageID, ext)
+// shuffle はスライスの要素をランダムに並び替えます
+func shuffle(slice []string) {
+	for i := len(slice) - 1; i > 0; i-- {
+		j := time.Now().UnixNano() % int64(i+1)
+		slice[i], slice[j] = slice[j], slice[i]
 	}
-	return fmt.Sprintf("generated/%s_fake%d%s", imageID, *index, ext)
 }

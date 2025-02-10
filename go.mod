@@ -1,13 +1,11 @@
-module zenn_ai_hackathon_2501_backend
+module github.com/zenn-dev/zenn-ai-hackathon
 
 // GC Build が 1.22 に未対応
 go 1.21
 
-toolchain go1.22.5
-
 require (
 	cloud.google.com/go/storage v1.43.0
-	cloud.google.com/go/vertexai v0.13.3
+	cloud.google.com/go/vertexai v0.7.1
 	golang.org/x/oauth2 v0.24.0
 )
 
